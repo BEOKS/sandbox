@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: admin-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tenant_registry
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  boot:
+    admin:
+      ui:
+        title: Cloud Platform Admin
+        brand: Cloud Platform
+
+server:
+  port: 8888
+
+logging:
+  level:
+    com.cloud: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
