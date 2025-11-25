@@ -1,0 +1,221 @@
+databaseChangeLog:
+  # Step 1: 마이그레이션 시작 태그 (롤백 포인트)
+  - changeSet:
+      id: 7
+      author: developer
+      comment: Tag before migration for rollback point
+      changes:
+        - tagDatabase:
+            tag: before-users-migration
+
+  # Step 2: 새로운 members 테이블 생성 (정규화된 구조)
+  - changeSet:
+      id: 8
+      author: developer
+      comment: Create new members table with improved structure
+      changes:
+        - createTable:
+            tableName: members
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone_country_code
+                  type: VARCHAR(5)
+              - column:
+                  name: phone_number
+                  type: VARCHAR(15)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: ACTIVE
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+      rollback:
+        - dropTable:
+            tableName: members
+
+  # Step 3: 기존 users 데이터를 members로 마이그레이션 (H2)
+  - changeSet:
+      id: 9
+      author: developer
+      dbms: h2
+      comment: Migrate data from users to members table (H2)
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO members (id, first_name, last_name, email, phone_country_code, phone_number, status)
+              SELECT
+                id,
+                SUBSTRING(name, 1, LOCATE(' ', name || ' ') - 1) as first_name,
+                CASE
+                  WHEN LOCATE(' ', name) > 0 THEN SUBSTRING(name, LOCATE(' ', name) + 1)
+                  ELSE ''
+                END as last_name,
+                email,
+                CASE
+                  WHEN phone IS NOT NULL THEN SUBSTRING(phone, 1, 3)
+                  ELSE NULL
+                END as phone_country_code,
+                CASE
+                  WHEN phone IS NOT NULL THEN REPLACE(SUBSTRING(phone, 5), '-', '')
+                  ELSE NULL
+                END as phone_number,
+                'ACTIVE' as status
+              FROM users
+      rollback:
+        - sql:
+            sql: DELETE FROM members WHERE id IN (SELECT id FROM users)
+
+  # Step 3: 기존 users 데이터를 members로 마이그레이션 (Oracle)
+  - changeSet:
+      id: 9
+      author: developer
+      dbms: oracle
+      comment: Migrate data from users to members table (Oracle)
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO members (id, first_name, last_name, email, phone_country_code, phone_number, status)
+              SELECT
+                id,
+                SUBSTR(name, 1, INSTR(name || ' ', ' ') - 1) as first_name,
+                CASE
+                  WHEN INSTR(name, ' ') > 0 THEN SUBSTR(name, INSTR(name, ' ') + 1)
+                  ELSE ''
+                END as last_name,
+                email,
+                CASE
+                  WHEN phone IS NOT NULL THEN SUBSTR(phone, 1, 3)
+                  ELSE NULL
+                END as phone_country_code,
+                CASE
+                  WHEN phone IS NOT NULL THEN REPLACE(SUBSTR(phone, 5), '-', '')
+                  ELSE NULL
+                END as phone_number,
+                'ACTIVE' as status
+              FROM users
+      rollback:
+        - sql:
+            sql: DELETE FROM members WHERE id IN (SELECT id FROM users)
+
+  # Step 4: orders 테이블의 FK를 새 테이블로 변경
+  - changeSet:
+      id: 10
+      author: developer
+      comment: Update orders foreign key to reference members
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: orders
+            constraintName: FK_ORDERS_USER
+        - addForeignKeyConstraint:
+            baseTableName: orders
+            baseColumnNames: user_id
+            referencedTableName: members
+            referencedColumnNames: id
+            constraintName: FK_ORDERS_MEMBER
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: orders
+            constraintName: FK_ORDERS_MEMBER
+        - addForeignKeyConstraint:
+            baseTableName: orders
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_ORDERS_USER
+
+  # Step 5: 기존 users 테이블 백업 후 삭제
+  - changeSet:
+      id: 11
+      author: developer
+      comment: Backup and drop old users table
+      changes:
+        - createTable:
+            tableName: users_backup
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  name: phone
+                  type: VARCHAR(20)
+              - column:
+                  name: backed_up_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: INSERT INTO users_backup (id, name, email, phone) SELECT id, name, email, phone FROM users
+        - dropTable:
+            tableName: users
+      rollback:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone
+                  type: VARCHAR(20)
+        - sql:
+            sql: INSERT INTO users (id, name, email, phone) SELECT id, name, email, phone FROM users_backup
+        - dropTable:
+            tableName: users_backup
+
+  # Step 6: 마이그레이션 완료 태그
+  - changeSet:
+      id: 12
+      author: developer
+      comment: Tag after successful migration
+      changes:
+        - tagDatabase:
+            tag: after-users-migration

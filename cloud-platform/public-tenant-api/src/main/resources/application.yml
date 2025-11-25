@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: public-tenant-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/tenant_registry
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+server:
+  port: 9090
+  ssl:
+    enabled: false
+    # For production, enable SSL with client authentication
+    # enabled: true
+    # key-store: classpath:keystore.p12
+    # key-store-password: changeit
+    # key-store-type: PKCS12
+    # client-auth: need
+    # trust-store: classpath:truststore.jks
+    # trust-store-password: changeit
+
+tenant:
+  type: PUBLIC
+  datasources:
+    - tenantId: public_tenant_gov_001
+      url: jdbc:postgresql://localhost:5433/public_tenant_gov_001
+      username: postgres
+      password: postgres
+    - tenantId: public_tenant_gov_002
+      url: jdbc:postgresql://localhost:5433/public_tenant_gov_002
+      username: postgres
+      password: postgres
+
+certificate:
+  validation:
+    enabled: true
+    check-revocation: false
+
+logging:
+  level:
+    com.cloud: DEBUG
+    org.springframework.security: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always

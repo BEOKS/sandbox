@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: developer
+      comment: Create orders table
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_orders_user
+                    references: users(id)
+              - column:
+                  name: product_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_price
+                  type: DECIMAL(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 6
+      author: developer
+      comment: Insert sample orders
+      changes:
+        - insert:
+            tableName: orders
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: product_name
+                  value: Laptop
+              - column:
+                  name: quantity
+                  valueNumeric: 1
+              - column:
+                  name: total_price
+                  valueNumeric: 1500000.00
+        - insert:
+            tableName: orders
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: product_name
+                  value: Mouse
+              - column:
+                  name: quantity
+                  valueNumeric: 2
+              - column:
+                  name: total_price
+                  valueNumeric: 50000.00
+        - insert:
+            tableName: orders
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 2
+              - column:
+                  name: product_name
+                  value: Keyboard
+              - column:
+                  name: quantity
+                  valueNumeric: 1
+              - column:
+                  name: total_price
+                  valueNumeric: 150000.00

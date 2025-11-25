@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: private-tenant-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tenant_registry
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8080
+
+jwt:
+  secret: your-secret-key-change-this-in-production-must-be-at-least-256-bits
+  expiration: 86400000
+
+tenant:
+  type: PRIVATE
+  datasources:
+    - tenantId: private_tenant_001
+      url: jdbc:postgresql://localhost:5432/private_tenant_001
+      username: postgres
+      password: postgres
+    - tenantId: private_tenant_002
+      url: jdbc:postgresql://localhost:5432/private_tenant_002
+      username: postgres
+      password: postgres
+
+logging:
+  level:
+    com.cloud: DEBUG
+    org.springframework.security: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always

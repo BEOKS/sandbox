@@ -1,0 +1,59 @@
+{
+  "policy": {
+    "name": "192-admin-vpc-write-policy",
+    "description": "192.x.x.x 대역의 관리자 사용자만 192 VPC에 대해 쓰기 권한을 가집니다",
+    "enabled": true,
+    "priority": 100,
+    "rules": [
+      {
+        "name": "192-admin-vpc-write-allow",
+        "effect": "ALLOW",
+        "description": "192.x.x.x 대역의 관리자가 192 VPC에 대해 쓰기 권한 허용",
+        "actionPattern": "*:write",
+        "resourcePattern": "vpc:*",
+        "condition": "{\n  \"StringLike\": {\n    \"#subject.roles\": \"*admin*\"\n  },\n  \"IpAddress\": {\n    \"#environment.ipAddress\": \"192.*.*.*\"\n  },\n  \"StringLike\": {\n    \"#resource.attributes['cidrBlock']\": \"192.*.*.*\"\n  }\n}"
+      },
+      {
+        "name": "192-admin-vpc-create-allow",
+        "effect": "ALLOW",
+        "description": "192.x.x.x 대역의 관리자가 192 VPC 생성 권한 허용",
+        "actionPattern": "create",
+        "resourcePattern": "vpc:*",
+        "condition": "{\n  \"StringLike\": {\n    \"#subject.roles\": \"*admin*\"\n  },\n  \"IpAddress\": {\n    \"#environment.ipAddress\": \"192.*.*.*\"\n  },\n  \"StringLike\": {\n    \"#resource.attributes['cidrBlock']\": \"192.*.*.*\"\n  }\n}"
+      },
+      {
+        "name": "192-admin-vpc-update-allow",
+        "effect": "ALLOW",
+        "description": "192.x.x.x 대역의 관리자가 192 VPC 수정 권한 허용",
+        "actionPattern": "update",
+        "resourcePattern": "vpc:*",
+        "condition": "{\n  \"StringLike\": {\n    \"#subject.roles\": \"*admin*\"\n  },\n  \"IpAddress\": {\n    \"#environment.ipAddress\": \"192.*.*.*\"\n  },\n  \"StringLike\": {\n    \"#resource.attributes['cidrBlock']\": \"192.*.*.*\"\n  }\n}"
+      },
+      {
+        "name": "192-admin-vpc-delete-allow",
+        "effect": "ALLOW",
+        "description": "192.x.x.x 대역의 관리자가 192 VPC 삭제 권한 허용",
+        "actionPattern": "delete",
+        "resourcePattern": "vpc:*",
+        "condition": "{\n  \"StringLike\": {\n    \"#subject.roles\": \"*admin*\"\n  },\n  \"IpAddress\": {\n    \"#environment.ipAddress\": \"192.*.*.*\"\n  },\n  \"StringLike\": {\n    \"#resource.attributes['cidrBlock']\": \"192.*.*.*\"\n  }\n}"
+      }
+    ]
+  },
+  "explanation": {
+    "policyName": "192-admin-vpc-write-policy",
+    "description": "이 정책은 다음 조건을 모두 만족하는 경우에만 VPC에 대한 쓰기 권한을 허용합니다:",
+    "conditions": [
+      "1. 사용자 역할(roles)에 'admin'이 포함되어 있어야 합니다 (StringLike: *admin*)",
+      "2. 사용자의 IP 주소가 192.x.x.x 대역이어야 합니다 (IpAddress: 192.*.*.*)",
+      "3. VPC의 CIDR 블록이 192.x.x.x로 시작해야 합니다 (StringLike: 192.*.*.*)"
+    ],
+    "actions": [
+      "create: VPC 생성",
+      "update: VPC 수정",
+      "delete: VPC 삭제",
+      "*:write: 모든 쓰기 액션 (포괄적)"
+    ],
+    "resourcePattern": "vpc:* (모든 VPC 리소스)"
+  }
+}
+
